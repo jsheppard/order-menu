@@ -6,6 +6,7 @@ import com.sbsolutions.api.RollClient;
 import com.sbsolutions.order.models.Donut;
 import com.sbsolutions.order.models.PricingSheet;
 import com.sbsolutions.order.models.Roll;
+import com.sbsolutions.util.KioskLogic;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -21,7 +22,6 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -358,73 +358,18 @@ public class KioskView extends VerticalLayout {
   }
 
   private String bestImageUrl(Donut item) {
-    if (notBlank(item.getImageSmall()))  return fixExt(item.getImageSmall());
-    if (notBlank(item.getImageMedium())) return fixExt(item.getImageMedium());
-    if (notBlank(item.getUrl()))         return fixExt(item.getUrl());
-    return null;
+    return KioskLogic.bestImageUrl(item);
   }
-
-  private String fixExt(String url) {
-    return (url != null && url.endsWith(".webp")) ? url.replace(".webp", ".png") : url;
-  }
-
-  private static final List<String> DAY_ORDER =
-      List.of("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun");
 
   private int dayOrder(String availableDays) {
-    if (!notBlank(availableDays)) return -1;
-    for (int i = 0; i < DAY_ORDER.size(); i++) {
-      if (availableDays.contains(DAY_ORDER.get(i))) return i;
-    }
-    return DAY_ORDER.size();
+    return KioskLogic.dayOrder(availableDays);
   }
 
-  /**
-   * Parses an availableDays string into a Set of DayOfWeek values.
-   * Handles comma-separated values, ranges (e.g. "Mon-Fri"), short names ("Mon"),
-   * full names ("Monday"), and full uppercase enum names ("MONDAY").
-   */
   private Set<DayOfWeek> parseAvailableDays(String input) {
-    Set<DayOfWeek> result = EnumSet.noneOf(DayOfWeek.class);
-    if (input == null || input.isBlank()) return result;
-
-    for (String part : input.split(",")) {
-      part = part.trim();
-      if (part.contains("-")) {
-        String[] range = part.split("-", 2);
-        DayOfWeek start = parseDay(range[0].trim());
-        DayOfWeek end   = parseDay(range[1].trim());
-        if (start != null && end != null) {
-          int s = start.getValue(), e = end.getValue();
-          if (s <= e) {
-            for (int i = s; i <= e; i++) result.add(DayOfWeek.of(i));
-          } else {
-            for (int i = s; i <= 7; i++) result.add(DayOfWeek.of(i));
-            for (int i = 1; i <= e; i++) result.add(DayOfWeek.of(i));
-          }
-        }
-      } else {
-        DayOfWeek day = parseDay(part);
-        if (day != null) result.add(day);
-      }
-    }
-    return result;
-  }
-
-  private DayOfWeek parseDay(String text) {
-    return switch (text.trim().toLowerCase()) {
-      case "mon", "monday"                       -> DayOfWeek.MONDAY;
-      case "tue", "tues", "tuesday"              -> DayOfWeek.TUESDAY;
-      case "wed", "wednesday"                    -> DayOfWeek.WEDNESDAY;
-      case "thu", "thur", "thurs", "thursday"   -> DayOfWeek.THURSDAY;
-      case "fri", "friday"                       -> DayOfWeek.FRIDAY;
-      case "sat", "saturday"                     -> DayOfWeek.SATURDAY;
-      case "sun", "sunday"                       -> DayOfWeek.SUNDAY;
-      default                                    -> null;
-    };
+    return KioskLogic.parseAvailableDays(input);
   }
 
   private boolean notBlank(String s) {
-    return s != null && !s.isBlank();
+    return KioskLogic.notBlank(s);
   }
 }
