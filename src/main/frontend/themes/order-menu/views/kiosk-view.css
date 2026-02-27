@@ -1,0 +1,316 @@
+/* ═══════════════════════════════════════════════════════════
+   Kiosk Menu View — full-screen auto-scrolling product display
+   Scaled for large-format displays (85"+ / 4K)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Root ─────────────────────────────────────────────────── */
+.kiosk-root {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 15%  8%,  rgba(220, 90,  50, 0.32) 0%, transparent 42%),
+    radial-gradient(ellipse at 88% 92%,  rgba( 70, 10,  10, 0.55) 0%, transparent 48%),
+    linear-gradient(155deg, #1c0a06 0%, #4a1520 28%, #7a2e1a 58%, #c4623d 100%);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Main layout (sections + prices sidebar) ─────────────── */
+.kiosk-main {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+}
+
+.kiosk-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Prices sidebar ───────────────────────────────────────── */
+.kiosk-prices {
+  width: clamp(360px, 16.5vw, 615px);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: clamp(15px, 1.5vw, 28px) clamp(14px, 1.2vw, 24px);
+  border-left: 1px solid rgba(244, 162, 97, 0.25);
+}
+
+.kiosk-prices-title {
+  color: #f4a261;
+  font-size: clamp(1.65rem, 2.1vw, 3.15rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1;
+  padding-bottom: clamp(5px, 0.45vw, 9px);
+  border-bottom: 1px solid rgba(244, 162, 97, 0.25);
+  display: block;
+}
+
+.kiosk-prices-row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: clamp(5px, 0.525vw, 10px);
+  padding: 0;
+  border-bottom: 1px solid rgba(244, 162, 97, 0.10);
+}
+
+.kiosk-prices-desc {
+  flex: 1;
+  color: #ffffff;
+  font-size: clamp(1.35rem, 1.725vw, 2.7rem);
+  font-weight: 700;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.kiosk-prices-unit {
+  color: #ffffff;
+  font-size: clamp(1.125rem, 1.425vw, 2.25rem);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.kiosk-prices-price {
+  color: #ffffff;
+  font-size: clamp(1.35rem, 1.725vw, 2.7rem);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ── Specials section (inside prices sidebar) ─────────────── */
+.kiosk-specials-title {
+  color: #f4a261;
+  font-size: clamp(1.425rem, 1.8vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  display: block;
+  margin-top: clamp(14px, 1.2vw, 24px);
+  padding: clamp(8px, 0.75vw, 14px) 0;
+  border-top: 1px solid rgba(244, 162, 97, 0.25);
+  border-bottom: 1px solid rgba(244, 162, 97, 0.25);
+}
+
+.kiosk-specials-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 11px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(244, 162, 97, 0.18);
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.kiosk-specials-img {
+  width: clamp(135px, 9vw, 210px);
+  height: clamp(135px, 9vw, 210px);
+  object-fit: cover;
+  border-radius: 11px;
+  display: block;
+  margin: clamp(8px, 0.75vw, 14px) auto 0;
+}
+
+.kiosk-specials-name {
+  color: #ffffff;
+  font-size: clamp(1.2rem, 1.5vw, 2.4rem);
+  font-weight: 700;
+  word-break: break-word;
+  padding: clamp(6px, 0.6vw, 12px) clamp(8px, 0.75vw, 14px) clamp(2px, 0.225vw, 5px);
+}
+
+.kiosk-specials-price {
+  color: #f4a261;
+  font-size: clamp(1.2rem, 1.5vw, 2.4rem);
+  font-weight: 800;
+  padding: 0 clamp(8px, 0.75vw, 14px) clamp(8px, 0.75vw, 14px);
+}
+
+/* ── Page header ──────────────────────────────────────────── */
+.kiosk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(8px, 0.9vw, 18px) clamp(24px, 2.4vw, 48px);
+  border-bottom: 1px solid rgba(244, 162, 97, 0.20);
+}
+
+.kiosk-header-brand {
+  color: #fff8f0;
+  font-size: clamp(2.1rem, 3vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+}
+
+.kiosk-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.kiosk-header-date {
+  color: rgba(244, 162, 97, 0.9);
+  font-size: clamp(1.125rem, 1.65vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.kiosk-header-refreshed {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: clamp(0.825rem, 1.125vw, 1.65rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+/* ── Section ──────────────────────────────────────────────── */
+.kiosk-section {
+  padding: clamp(15px, 1.5vw, 30px) 0 clamp(8px, 0.75vw, 15px);
+}
+
+.kiosk-section-label {
+  color: #f4a261;
+  font-size: clamp(1.5rem, 2.25vw, 3.3rem);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0 0 clamp(11px, 1.05vw, 21px) clamp(21px, 2.1vw, 42px);
+  text-transform: uppercase;
+}
+
+/* ── Scroll viewport (masks overflow) ────────────────────── */
+.kiosk-viewport {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Scrolling track ──────────────────────────────────────── */
+@keyframes kiosk-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.kiosk-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: clamp(18px, 1.8vw, 38px);
+  padding: clamp(8px, 0.75vw, 14px) clamp(21px, 2.1vw, 42px) clamp(18px, 1.8vw, 38px);
+  width: max-content;
+  animation: kiosk-scroll linear infinite;
+  will-change: transform;
+}
+
+/* Pause on hover so staff / customers can read a card */
+.kiosk-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Product card ─────────────────────────────────────────── */
+.kiosk-card {
+  flex-shrink: 0;
+  width: clamp(270px, 13.5vw, 510px);
+  background: rgba(255, 252, 248, 0.95);
+  border-radius: clamp(12px, 1.2vw, 23px);
+  padding: clamp(11px, 1.05vw, 21px) clamp(9px, 0.9vw, 17px);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(244, 162, 97, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(5px, 0.525vw, 11px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kiosk-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.60),
+    0 0 0 2px rgba(244, 162, 97, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+/* ── Card media row (left info + image side-by-side) ─────── */
+.kiosk-card-media {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: clamp(6px, 0.675vw, 14px);
+  width: 100%;
+}
+
+.kiosk-card-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(3px, 0.3vw, 6px);
+  min-width: 0;
+}
+
+/* ── Card image ───────────────────────────────────────────── */
+.kiosk-card-img {
+  width: clamp(120px, 9vw, 210px);
+  height: clamp(120px, 9vw, 210px);
+  object-fit: cover;
+  border-radius: clamp(8px, 0.75vw, 14px);
+  display: block;
+  flex-shrink: 0;
+}
+
+.kiosk-card-img-placeholder {
+  width: clamp(120px, 9vw, 210px);
+  height: clamp(120px, 9vw, 210px);
+  border-radius: clamp(8px, 0.75vw, 14px);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(244,162,97,0.4) 0%, rgba(231,111,81,0.4) 100%);
+}
+
+/* ── Card text ────────────────────────────────────────────── */
+.kiosk-card-name {
+  font-size: clamp(1.05rem, 1.2vw, 1.95rem);
+  font-weight: 700;
+  color: #1c0a06;
+  text-align: center;
+  line-height: 1.3;
+  display: block;
+}
+
+.kiosk-card-price {
+  font-size: clamp(1.05rem, 1.2vw, 1.95rem);
+  font-weight: 800;
+  color: #c4623d;
+  text-align: center;
+  word-break: break-word;
+  display: block;
+}
+
+.kiosk-card-days {
+  font-size: clamp(0.9rem, 1.05vw, 1.65rem);
+  font-weight: 700;
+  color: #d32f2f;
+  text-align: center;
+  word-break: break-word;
+  display: block;
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.kiosk-empty {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: clamp(1.2rem, 1.5vw, 2.25rem);
+  font-style: italic;
+}
