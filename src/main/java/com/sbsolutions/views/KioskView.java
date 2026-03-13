@@ -18,8 +18,13 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -49,6 +54,7 @@ public class KioskView extends VerticalLayout {
   private final DonutsClient       donutsClient;
   private final RollClient         rollClient;
   private final PricingSheetClient pricingSheetClient;
+  private final Div currentTime;
   private ScheduledFuture<?>       refreshTask;
   private final Div  content        = new Div();
   private final Div  pricesSidebar  = new Div();
@@ -78,7 +84,16 @@ public class KioskView extends VerticalLayout {
 
     Div headerRight = new Div();
     headerRight.addClassName("kiosk-header-right");
-    headerRight.add(headerDate, lastRefreshed);
+
+    currentTime = new Div();
+    currentTime.addClassName("kiosk-header-refreshed");
+
+    headerRight.add(headerDate, currentTime, lastRefreshed);
+    updateTime();
+
+    UI.getCurrent().setPollInterval(1000);
+
+    UI.getCurrent().addPollListener(e -> updateTime());
 
     header.add(brand, headerRight);
     add(header);
@@ -93,6 +108,14 @@ public class KioskView extends VerticalLayout {
     add(main);
 
     loadData();
+  }
+
+  private void updateTime() {
+    ZoneId zone = ZoneId.of("America/Chicago");
+
+    currentTime.setText(
+        ZonedDateTime.now().format(DateTimeFormatter.ofPattern("h:mm:ss a"))
+    );
   }
 
   @Override
@@ -200,8 +223,11 @@ public class KioskView extends VerticalLayout {
 
     List<Donut> todaySpecials = allProducts.stream()
         .filter(d -> notBlank(d.getAvailableDays())
-            && parseAvailableDays(d.getAvailableDays()).contains(today))
-        .collect(Collectors.toList());
+            && parseAvailableDays(d.getAvailableDays()).contains(today)
+            || isTodaySpecial(d)
+        )
+        .toList();
+
 
     if (!todaySpecials.isEmpty()) {
       Span specialsTitle = new Span("Specials");
@@ -228,14 +254,21 @@ public class KioskView extends VerticalLayout {
         name.addClassName("kiosk-specials-name");
         card.add(name);
 
-        if (special.getPrice() != null) {
-          String priceText = String.format("$%.2f", special.getPrice());
+        BigDecimal price;
+        if (isTodaySpecial(special)) {
+          price = special.getSpecialPrice();
+        } else {
+          price = special.getPrice();
+        }
+
+        if (price != null) {
+          String priceText = String.format("$%.2f", price);
           if (notBlank(special.getUnit())) {
             priceText += " / " + special.getUnit();
           }
-          Span price = new Span(priceText);
-          price.addClassName("kiosk-specials-price");
-          card.add(price);
+          Span priceSpan = new Span(priceText);
+          priceSpan.addClassName("kiosk-specials-price");
+          card.add(priceSpan);
         }
 
         pricesSidebar.add(card);
@@ -277,6 +310,8 @@ public class KioskView extends VerticalLayout {
     return section;
   }
 
+  private static final int PAGE_SIZE = 12;
+
   private Div createScrollingRow(List<? extends Donut> items) {
     Div viewport = new Div();
     viewport.addClassName("kiosk-viewport");
@@ -284,22 +319,48 @@ public class KioskView extends VerticalLayout {
     Div track = new Div();
     track.addClassName("kiosk-track");
 
-    // Products without availableDays first; those with it sorted ascending by first day
     List<? extends Donut> sorted = items.stream()
-        .sorted(Comparator.comparingInt((Donut d) -> notBlank(d.getAvailableDays()) ? 1 : 0)
-            .thenComparingInt(d -> dayOrder(d.getAvailableDays())))
+        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
         .toList();
 
-    // Duplicate items for seamless infinite scroll loop
-    for (int pass = 0; pass < 2; pass++) {
-      for (Donut item : sorted) {
-        track.add(createCard(item));
+    int numPages = (sorted.size() + PAGE_SIZE - 1) / PAGE_SIZE;
+
+    for (int p = 0; p < numPages; p++) {
+      Div page = new Div();
+      page.addClassName("kiosk-page");
+      if (p > 0) page.getStyle().set("display", "none");
+
+      int start = p * PAGE_SIZE;
+      int end = Math.min(start + PAGE_SIZE, sorted.size());
+      for (int i = start; i < end; i++) {
+        page.add(createCard(sorted.get(i)));
       }
+      track.add(page);
     }
 
-    // 3 seconds per card, minimum 12 seconds
-    int durationSeconds = Math.max(12, sorted.size() * 3);
-    track.getStyle().set("animation-duration", durationSeconds + "s");
+    if (numPages > 1) {
+      track.getElement().executeJs(
+          "var el = $0;" +
+          "if (el._kioskFlip) clearInterval(el._kioskFlip);" +
+          "var pages = el.querySelectorAll('.kiosk-page');" +
+          "var cur = 0;" +
+          "el._kioskFlip = setInterval(function() {" +
+          "  var out = pages[cur];" +
+          "  out.classList.add('kiosk-page-exit');" +
+          "  setTimeout(function() {" +
+          "    out.style.display = 'none';" +
+          "    out.classList.remove('kiosk-page-exit');" +
+          "    cur = (cur + 1) % pages.length;" +
+          "    var inn = pages[cur];" +
+          "    inn.style.display = '';" +
+          "    inn.offsetHeight;" +
+          "    inn.classList.add('kiosk-page-enter');" +
+          "    setTimeout(function() { inn.classList.remove('kiosk-page-enter'); }, 600);" +
+          "  }, 500);" +
+          "}, 10000);",
+          track.getElement()
+      );
+    }
 
     viewport.add(track);
     return viewport;
@@ -371,5 +432,12 @@ public class KioskView extends VerticalLayout {
 
   private boolean notBlank(String s) {
     return KioskLogic.notBlank(s);
+  }
+
+  private <T extends Donut> boolean isTodaySpecial(T item) {
+    if (item.getSpecialPriceDate() == null) return false;
+    LocalDate specialDate = item.getSpecialPriceDate().toInstant()
+        .atZone(ZoneId.systemDefault()).toLocalDate();
+    return specialDate.equals(LocalDate.now(ZoneId.systemDefault()));
   }
 }
