@@ -111,8 +111,8 @@
 }
 
 .kiosk-specials-img {
-  width: clamp(135px, 9vw, 210px);
-  height: clamp(135px, 9vw, 210px);
+  width: clamp(203px, 13.5vw, 315px);
+  height: clamp(203px, 13.5vw, 315px);
   object-fit: cover;
   border-radius: 11px;
   display: block;
@@ -125,6 +125,16 @@
   font-weight: 700;
   word-break: break-word;
   padding: clamp(6px, 0.6vw, 12px) clamp(8px, 0.75vw, 14px) clamp(2px, 0.225vw, 5px);
+}
+
+.kiosk-specials-days {
+  color: #ffffff;
+  font-size: clamp(0.9rem, 1.1vw, 1.8rem);
+  font-weight: 700;
+  text-align: center;
+  word-break: break-word;
+  padding: 0 clamp(8px, 0.75vw, 14px);
+  display: block;
 }
 
 .kiosk-specials-price {
@@ -186,7 +196,7 @@
   font-size: clamp(1.5rem, 2.25vw, 3.3rem);
   font-weight: 700;
   letter-spacing: 1px;
-  margin: 0 0 clamp(11px, 1.05vw, 21px) clamp(21px, 2.1vw, 42px);
+  margin: 0 0 clamp(4px, 0.4vw, 8px) clamp(21px, 2.1vw, 42px);
   text-transform: uppercase;
 }
 
@@ -226,7 +236,7 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: clamp(8px, 0.75vw, 14px);
-  padding: clamp(8px, 0.75vw, 14px) clamp(21px, 2.1vw, 42px) clamp(18px, 1.8vw, 38px);
+  padding: clamp(8px, 0.75vw, 14px) clamp(21px, 2.1vw, 42px) clamp(9px, 0.9vw, 19px);
 }
 
 @keyframes kiosk-page-in {
@@ -295,7 +305,7 @@
 
 /* ── Card image ───────────────────────────────────────────── */
 .kiosk-card-img {
-  width: 25%;
+  width: 37.5%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: clamp(3px, 0.25vw, 5px);
@@ -303,7 +313,7 @@
 }
 
 .kiosk-card-img-placeholder {
-  width: 25%;
+  width: 37.5%;
   aspect-ratio: 1 / 1;
   border-radius: clamp(3px, 0.25vw, 5px);
   background: linear-gradient(135deg, rgba(244,162,97,0.4) 0%, rgba(231,111,81,0.4) 100%);

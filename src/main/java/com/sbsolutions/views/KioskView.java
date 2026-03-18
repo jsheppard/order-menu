@@ -12,6 +12,7 @@ import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -254,6 +255,12 @@ public class KioskView extends VerticalLayout {
         name.addClassName("kiosk-specials-name");
         card.add(name);
 
+        if (notBlank(special.getAvailableDays())) {
+          Span days = new Span(special.getAvailableDays().replace(",", " · "));
+          days.addClassName("kiosk-specials-days");
+          card.add(days);
+        }
+
         BigDecimal price;
         if (isTodaySpecial(special)) {
           price = special.getSpecialPrice();
@@ -301,7 +308,7 @@ public class KioskView extends VerticalLayout {
     Div section = new Div();
     section.addClassName("kiosk-section");
 
-    H3 sectionLabel = new H3(label);
+    H4 sectionLabel = new H4(label);
     sectionLabel.addClassName("kiosk-section-label");
     section.add(sectionLabel);
 
@@ -377,16 +384,6 @@ public class KioskView extends VerticalLayout {
     // Left column: price + available days
     Div left = new Div();
     left.addClassName("kiosk-card-left");
-
-    if (item.getPrice() != null) {
-      String priceText = String.format("$%.2f", item.getPrice());
-      if (item.getUnit() != null && !item.getUnit().isBlank()) {
-        priceText += " / " + item.getUnit();
-      }
-      Span price = new Span(priceText);
-      price.addClassName("kiosk-card-price");
-      left.add(price);
-    }
 
     if (item.getAvailableDays() != null && !item.getAvailableDays().isBlank()) {
       Span days = new Span(item.getAvailableDays().replace(",", " · "));
