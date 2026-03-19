@@ -4,6 +4,7 @@ import com.sbsolutions.api.DonutsClient;
 import com.sbsolutions.api.PricingSheetClient;
 import com.sbsolutions.api.RollClient;
 import com.sbsolutions.order.models.Donut;
+import com.sbsolutions.order.models.ItemType;
 import com.sbsolutions.order.models.PricingSheet;
 import com.sbsolutions.order.models.Roll;
 import com.sbsolutions.util.KioskLogic;
@@ -115,7 +116,7 @@ public class KioskView extends VerticalLayout {
     ZoneId zone = ZoneId.of("America/Chicago");
 
     currentTime.setText(
-        ZonedDateTime.now().format(DateTimeFormatter.ofPattern("h:mm:ss a"))
+        ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm:ss a"))
     );
   }
 
@@ -148,36 +149,26 @@ public class KioskView extends VerticalLayout {
     List<Roll>          rolls         = List.of();
     List<PricingSheet>  pricingSheets = List.of();
 
-    try { donuts        = donutsClient.findAll();        } catch (Exception e) { log.warn("Could not load donuts: {}",          e.getMessage()); }
-    try { rolls         = rollClient.findAll();           } catch (Exception e) { log.warn("Could not load rolls: {}",           e.getMessage()); }
+    var donutTypes = new ItemType[]{ItemType.CAKE_DONUT, ItemType.GLAZED_DONUT, ItemType.RAISED_DONUT, ItemType.MIX};
+    var rollTypes = new ItemType[] {ItemType.ROLL, ItemType.MIX};
+    var donutHoleTypes = new ItemType[] {ItemType.CAKE_DONUT_HOLES, ItemType.GLAZED_DONUT_HOLES, ItemType.RAISED_DONUT_HOLES};
+
+    try { donuts        = donutsClient.findByItemTypes(donutTypes);        } catch (Exception e) { log.warn("Could not load donuts: {}",          e.getMessage()); }
+    try { rolls         = rollClient.findByItemTypes(rollTypes);           } catch (Exception e) { log.warn("Could not load rolls: {}",           e.getMessage()); }
     try { pricingSheets = pricingSheetClient.findAll();   } catch (Exception e) { log.warn("Could not load pricing sheets: {}",  e.getMessage()); }
 
-    headerDate.getElement().executeJs(
-        "const d = new Date();" +
-        "this.textContent = d.toLocaleDateString('en-GB', " +
-        "{weekday:'long', day:'numeric', month:'long', year:'numeric'});"
-    );
-    lastRefreshed.getElement().executeJs(
-        "this.textContent = 'Last refreshed: ' + " +
-        "new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});"
-    );
+    headerDate.setText(LocalDate.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
+    lastRefreshed.setText("Last refreshed: " + LocalTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm:ss a")));
 
     content.removeAll();
 
-    List<Donut> donutHoles = donuts.stream()
-        .filter(d -> d.getDescription() != null
-            && d.getDescription().toLowerCase().contains("donut holes"))
-        .collect(Collectors.toList());
-    List<Donut> regularDonuts = donuts.stream()
-        .filter(d -> d.getDescription() == null
-            || !d.getDescription().toLowerCase().contains("donut holes"))
-        .collect(Collectors.toList());
+    List<Donut> donutHoles = donutsClient.findByItemTypes(donutHoleTypes);
 
-    if (!regularDonuts.isEmpty()) content.add(createSection("Donuts",      regularDonuts));
+    if (!donuts.isEmpty()) content.add(createSection("Donuts",      donuts));
     if (!donutHoles.isEmpty())    content.add(createSection("Donut Holes", donutHoles));
     if (!rolls.isEmpty())         content.add(createSection("Rolls",       rolls));
 
-    if (donuts.isEmpty() && rolls.isEmpty()) {
+    if (donuts.isEmpty() && rolls.isEmpty() && donutHoles.isEmpty()) {
       Span empty = new Span("No products available at this time.");
       empty.addClassName("kiosk-empty");
       content.add(empty);
@@ -186,6 +177,8 @@ public class KioskView extends VerticalLayout {
     List<Donut> allProducts = new ArrayList<>();
     allProducts.addAll(donuts);
     allProducts.addAll(rolls);
+    allProducts.addAll(donutHoles);
+
     buildPricesSidebar(pricingSheets, allProducts);
   }
 
