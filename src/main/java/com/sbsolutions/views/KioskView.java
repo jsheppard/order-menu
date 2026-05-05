@@ -116,7 +116,7 @@ public class KioskView extends VerticalLayout {
     ZoneId zone = ZoneId.of("America/Chicago");
 
     currentTime.setText(
-        ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm:ss a"))
+        ZonedDateTime.now(zone).format(DateTimeFormatter.ofPattern("h:mm:ss a"))
     );
   }
 
@@ -149,7 +149,7 @@ public class KioskView extends VerticalLayout {
     List<Roll>          rolls         = List.of();
     List<PricingSheet>  pricingSheets = List.of();
 
-    var donutTypes = new ItemType[]{ItemType.CAKE_DONUT, ItemType.GLAZED_DONUT, ItemType.RAISED_DONUT, ItemType.MIX};
+    var donutTypes = new ItemType[]{ItemType.CAKE_DONUT, ItemType.GLAZED_DONUT, ItemType.RAISED_DONUT, ItemType.BIG_DONUT, ItemType.MIX};
     var rollTypes = new ItemType[] {ItemType.ROLL, ItemType.MIX};
     var donutHoleTypes = new ItemType[] {ItemType.CAKE_DONUT_HOLES, ItemType.GLAZED_DONUT_HOLES, ItemType.RAISED_DONUT_HOLES};
 
@@ -157,8 +157,9 @@ public class KioskView extends VerticalLayout {
     try { rolls         = rollClient.findByItemTypes(rollTypes);           } catch (Exception e) { log.warn("Could not load rolls: {}",           e.getMessage()); }
     try { pricingSheets = pricingSheetClient.findAll();   } catch (Exception e) { log.warn("Could not load pricing sheets: {}",  e.getMessage()); }
 
-    headerDate.setText(LocalDate.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
-    lastRefreshed.setText("Last refreshed: " + LocalTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("h:mm:ss a")));
+    ZoneId zone = ZoneId.of("America/Chicago");
+    headerDate.setText(LocalDate.now(zone).format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
+    lastRefreshed.setText("Last refreshed: " + LocalTime.now(zone).format(DateTimeFormatter.ofPattern("h:mm:ss a")));
 
     content.removeAll();
 
@@ -213,7 +214,8 @@ public class KioskView extends VerticalLayout {
         });
 
     // ── Specials ─────────────────────────────────────────────
-    DayOfWeek today = LocalDate.now().getDayOfWeek();
+    ZoneId zone = ZoneId.of("America/Chicago");
+    DayOfWeek today = LocalDate.now(zone).getDayOfWeek();
 
     List<Donut> todaySpecials = allProducts.stream()
         .filter(d -> notBlank(d.getAvailableDays())
@@ -426,8 +428,9 @@ public class KioskView extends VerticalLayout {
 
   private <T extends Donut> boolean isTodaySpecial(T item) {
     if (item.getSpecialPriceDate() == null) return false;
+    ZoneId zone = ZoneId.of("America/Chicago");
     LocalDate specialDate = item.getSpecialPriceDate().toInstant()
-        .atZone(ZoneId.systemDefault()).toLocalDate();
-    return specialDate.equals(LocalDate.now(ZoneId.systemDefault()));
+        .atZone(zone).toLocalDate();
+    return specialDate.equals(LocalDate.now(zone));
   }
 }
