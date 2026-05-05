@@ -12,8 +12,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @StyleSheet("styles.css")
+@StyleSheet(Lumo.UTILITY_STYLESHEET)
 @Push
-@Theme(value = "order-menu", variant = Lumo.LIGHT)
+@Theme("order-menu")
 public class Application implements AppShellConfigurator {
 
   public static void main(String[] args) {

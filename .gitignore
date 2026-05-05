@@ -12,3 +12,7 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+node_modules
+
+# Frontend
+src/main/frontend/
