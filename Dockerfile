@@ -1,35 +1,42 @@
-# Build context must be the parent directory:
-#   fly deploy --build-context ../
-#   docker build -f order-menu/Dockerfile ..
-
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 
 WORKDIR /build
 
-# --- order-models ---
-COPY order-models/pom.xml ./order-models/pom.xml
-COPY order-models/src     ./order-models/src
-RUN cd order-models && mvn install -DskipTests -q
-
-# --- order-client ---
-COPY order-client/pom.xml ./order-client/pom.xml
-COPY order-client/src     ./order-client/src
-RUN cd order-client && mvn install -DskipTests -q
+# --- Copy and install order-models and order-client from jars ---
+COPY jars ./jars
+RUN mvn install:install-file -Dfile=./jars/order-models-1.0.0-SNAPSHOT.jar -DgroupId=com.sbsolutions -DartifactId=order-models -Dversion=1.0.0-SNAPSHOT -Dpackaging=jar -q && \
+    mvn install:install-file -Dfile=./jars/order-client-1.0.0-SNAPSHOT.jar -DgroupId=com.sbsolutions -DartifactId=order-client -Dversion=1.0.0-SNAPSHOT -Dpackaging=jar -q
 
 # --- order-menu ---
-COPY order-menu/pom.xml ./order-menu/pom.xml
-COPY order-menu/src     ./order-menu/src
-RUN cd order-menu && mvn package -Pnative -DskipTests -q
+COPY pom.xml .
+COPY src ./src
+RUN mvn package -Pproduction -DskipTests -q
 
 # ---- Runtime ----
-FROM eclipse-temurin:21-jre-jammy
+FROM container-registry.oracle.com/graalvm/jdk:25
 
 WORKDIR /app
 
-COPY --from=build /build/order-menu/target/*.jar app.jar
+# Create non-root user for container security
+RUN groupadd -r app && useradd -r -g app app
 
-EXPOSE 8080
+COPY --from=build /build/target/*.jar app.jar
+RUN chown app:app app.jar
+
+USER app
+
+EXPOSE 8082
 
 ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:InitialRAMPercentage=50.0", \
   "-XX:MaxRAMPercentage=75.0", \
+  "-XX:MinRAMPercentage=25.0", \
+  "-XX:+UseG1GC", \
+  "-XX:MaxGCPauseMillis=200", \
+  "-XX:+ParallelRefProcEnabled", \
+  "-XX:+AlwaysPreTouch", \
+  "-XX:-OmitStackTraceInFastThrow", \
+  "-Dfile.encoding=UTF-8", \
+  "-Duser.timezone=America/Chicago", \
   "-jar", "app.jar"]

@@ -11,14 +11,15 @@
   <packaging>jar</packaging>
 
   <properties>
-    <java.version>21</java.version>
-    <vaadin.version>24.9.11</vaadin.version>
+    <java.version>25</java.version>
+    <vaadin.version>25.1.5</vaadin.version>
+    <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
   </properties>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.9</version>
+    <version>4.0.4</version>
   </parent>
 
   <repositories>
@@ -99,6 +100,11 @@
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
@@ -168,6 +174,11 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.plugin.version}</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
