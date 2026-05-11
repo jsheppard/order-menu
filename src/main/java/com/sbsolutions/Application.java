@@ -7,6 +7,9 @@ import com.vaadin.flow.server.AppShellSettings;
 import com.vaadin.flow.server.PWA;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
+import jakarta.annotation.PostConstruct;
+import java.util.TimeZone;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -16,6 +19,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @Push
 @Theme("order-menu")
 public class Application implements AppShellConfigurator {
+
+  @Value("${app.time-zone:America/Chicago}")
+  private String timeZone;
+
+  @PostConstruct
+  public void init() {
+    TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
+  }
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
