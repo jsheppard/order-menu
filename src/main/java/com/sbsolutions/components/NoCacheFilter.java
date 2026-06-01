@@ -1,12 +1,11 @@
 package com.sbsolutions.components;
 
 import jakarta.servlet.*;
+import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 
-@Component
+@WebFilter(urlPatterns = "/*", asyncSupported = true)
 public class NoCacheFilter implements Filter {
 
   @Override
