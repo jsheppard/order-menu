@@ -11,13 +11,10 @@ import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.AfterNavigationEvent;
 import com.vaadin.flow.router.AfterNavigationObserver;
-import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import com.vaadin.flow.server.menu.MenuConfiguration;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.vaadin.lineawesome.LineAwesomeIconUrl;
 
-@Layout
 @AnonymousAllowed
 public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
@@ -64,6 +61,7 @@ public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
   @Override
   public void afterNavigation(AfterNavigationEvent event) {
-    viewTitle.setText(MenuConfiguration.getPageHeader(getContent()).orElse(""));
+    String segment = event.getLocation().getFirstSegment();
+    viewTitle.setText(segment != null ? segment : "");
   }
 }

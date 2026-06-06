@@ -1,6 +1,6 @@
 package com.sbsolutions;
 
-import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.server.AppShellSettings;
@@ -12,10 +12,9 @@ import java.util.TimeZone;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
-@StyleSheet("styles.css")
-@StyleSheet(Lumo.UTILITY_STYLESHEET)
-@Push
+@CssImport("./themes/order-menu/styles.css")
 @Theme("order-menu")
+@Push
 public class Application implements AppShellConfigurator {
 
   @ConfigProperty(name = "app.time-zone", defaultValue = "America/Chicago")

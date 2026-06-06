@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PageTitle("Kiosk Menu")
-@Route(value = "", autoLayout = false)
+@Route(value = "")
 @AnonymousAllowed
 public class KioskView extends VerticalLayout {
 
