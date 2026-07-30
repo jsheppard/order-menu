@@ -59,6 +59,7 @@ public class KioskView extends VerticalLayout {
   private final Div currentTime;
   private ScheduledFuture<?>       refreshTask;
   private final Div  content        = new Div();
+  private final Div  merchandiseSidebar = new Div();
   private final Div  pricesSidebar  = new Div();
   private final Span headerDate     = new Span();
   private final Span lastRefreshed  = new Span();
@@ -103,10 +104,11 @@ public class KioskView extends VerticalLayout {
     Div main = new Div();
     main.addClassName("kiosk-main");
 
+    merchandiseSidebar.addClassName("kiosk-merchandise");
     content.addClassName("kiosk-content");
     pricesSidebar.addClassName("kiosk-prices");
 
-    main.add(content, pricesSidebar);
+    main.add(merchandiseSidebar, content, pricesSidebar);
     add(main);
 
     loadData();
@@ -177,13 +179,52 @@ public class KioskView extends VerticalLayout {
 
     List<Donut> allProducts = new ArrayList<>();
     allProducts.addAll(donuts);
-    allProducts.addAll(rolls);
     allProducts.addAll(donutHoles);
 
-    buildPricesSidebar(pricingSheets, allProducts);
+    buildMerchandiseSidebar(donuts, rolls, donutHoles);
+    buildPricesSidebar(pricingSheets, allProducts, rolls);
   }
 
-  private void buildPricesSidebar(List<PricingSheet> sheets, List<Donut> allProducts) {
+  private void buildMerchandiseSidebar(List<Donut> donuts, List<Roll> rolls, List<Donut> donutHoles) {
+    merchandiseSidebar.removeAll();
+
+    Span title = new Span("Items");
+    title.addClassName("kiosk-merchandise-title");
+    merchandiseSidebar.add(title);
+
+    List<Donut> sortedDonuts = donuts.stream()
+        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
+        .toList();
+    List<Roll> sortedRolls = rolls.stream()
+        .sorted(Comparator.comparingInt(r -> r.getOrder() == null ? Integer.MAX_VALUE : r.getOrder()))
+        .toList();
+    List<Donut> sortedHoles = donutHoles.stream()
+        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
+        .toList();
+
+    for (Donut product : sortedDonuts) {
+      addMerchandiseItem(product.getDescription());
+    }
+    for (Roll product : sortedRolls) {
+      addMerchandiseItem(product.getDescription());
+    }
+    for (Donut product : sortedHoles) {
+      addMerchandiseItem(product.getDescription());
+    }
+  }
+
+  private void addMerchandiseItem(String name) {
+    Div item = new Div();
+    item.addClassName("kiosk-merchandise-item");
+
+    Span nameSpan = new Span(name != null ? name : "");
+    nameSpan.addClassName("kiosk-merchandise-name");
+    item.add(nameSpan);
+
+    merchandiseSidebar.add(item);
+  }
+
+  private void buildPricesSidebar(List<PricingSheet> sheets, List<Donut> allProducts, List<Roll> rolls) {
     pricesSidebar.removeAll();
 
     // ── Prices ───────────────────────────────────────────────
@@ -299,7 +340,7 @@ public class KioskView extends VerticalLayout {
     }
   }
 
-  private Div createSection(String label, List<? extends Donut> items) {
+  private Div createSection(String label, List<?> items) {
     Div section = new Div();
     section.addClassName("kiosk-section");
 
@@ -314,16 +355,14 @@ public class KioskView extends VerticalLayout {
 
   private static final int PAGE_SIZE = 12;
 
-  private Div createScrollingRow(List<? extends Donut> items) {
+  private Div createScrollingRow(List<?> items) {
     Div viewport = new Div();
     viewport.addClassName("kiosk-viewport");
 
     Div track = new Div();
     track.addClassName("kiosk-track");
 
-    List<? extends Donut> sorted = items.stream()
-        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
-        .toList();
+    List<?> sorted = items;
 
     int numPages = (sorted.size() + PAGE_SIZE - 1) / PAGE_SIZE;
 
@@ -335,7 +374,10 @@ public class KioskView extends VerticalLayout {
       int start = p * PAGE_SIZE;
       int end = Math.min(start + PAGE_SIZE, sorted.size());
       for (int i = start; i < end; i++) {
-        page.add(createCard(sorted.get(i)));
+        Object item = sorted.get(i);
+        if (item instanceof Donut) {
+          page.add(createCard((Donut) item));
+        }
       }
       track.add(page);
     }
