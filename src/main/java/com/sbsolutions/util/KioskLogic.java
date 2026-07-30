@@ -1,6 +1,8 @@
 package com.sbsolutions.util;
 
 import com.sbsolutions.order.models.Donut;
+import com.sbsolutions.order.models.Merchandise;
+import com.sbsolutions.order.models.Roll;
 import java.time.DayOfWeek;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,6 +45,30 @@ public final class KioskLogic {
    * are set. The chosen URL is passed through {@link #fixExt}.
    */
   public static String bestImageUrl(Donut item) {
+    if (notBlank(item.getImageSmall()))  return fixExt(item.getImageSmall());
+    if (notBlank(item.getImageMedium())) return fixExt(item.getImageMedium());
+    if (notBlank(item.getUrl()))         return fixExt(item.getUrl());
+    return null;
+  }
+
+  /**
+   * Returns the best available image URL for a {@link Merchandise}, preferring
+   * {@code imageSmall} → {@code imageMedium} → {@code url}, or {@code null} when none
+   * are set. The chosen URL is passed through {@link #fixExt}.
+   */
+  public static String bestImageUrl(Merchandise item) {
+    if (notBlank(item.getImageSmall()))  return fixExt(item.getImageSmall());
+    if (notBlank(item.getImageMedium())) return fixExt(item.getImageMedium());
+    if (notBlank(item.getUrl()))         return fixExt(item.getUrl());
+    return null;
+  }
+
+  /**
+   * Returns the best available image URL for a {@link Roll}, preferring
+   * {@code imageSmall} → {@code imageMedium} → {@code url}, or {@code null} when none
+   * are set. The chosen URL is passed through {@link #fixExt}.
+   */
+  public static String bestImageUrl(Roll item) {
     if (notBlank(item.getImageSmall()))  return fixExt(item.getImageSmall());
     if (notBlank(item.getImageMedium())) return fixExt(item.getImageMedium());
     if (notBlank(item.getUrl()))         return fixExt(item.getUrl());

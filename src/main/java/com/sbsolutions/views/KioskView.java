@@ -1,10 +1,12 @@
 package com.sbsolutions.views;
 
 import com.sbsolutions.api.DonutsClient;
+import com.sbsolutions.api.MerchandiseClient;
 import com.sbsolutions.api.PricingSheetClient;
 import com.sbsolutions.api.RollClient;
 import com.sbsolutions.order.models.Donut;
 import com.sbsolutions.order.models.ItemType;
+import com.sbsolutions.order.models.Merchandise;
 import com.sbsolutions.order.models.PricingSheet;
 import com.sbsolutions.order.models.Roll;
 import com.sbsolutions.util.KioskLogic;
@@ -56,6 +58,7 @@ public class KioskView extends VerticalLayout {
   private final DonutsClient       donutsClient;
   private final RollClient         rollClient;
   private final PricingSheetClient pricingSheetClient;
+  private final MerchandiseClient  merchandiseClient;
   private final Div currentTime;
   private ScheduledFuture<?>       refreshTask;
   private final Div  content        = new Div();
@@ -65,10 +68,11 @@ public class KioskView extends VerticalLayout {
   private final Span lastRefreshed  = new Span();
 
   public KioskView(DonutsClient donutsClient, RollClient rollClient,
-      PricingSheetClient pricingSheetClient) {
+      PricingSheetClient pricingSheetClient, MerchandiseClient merchandiseClient) {
     this.donutsClient       = donutsClient;
     this.rollClient         = rollClient;
     this.pricingSheetClient = pricingSheetClient;
+    this.merchandiseClient  = merchandiseClient;
 
     setSizeFull();
     setPadding(false);
@@ -150,6 +154,7 @@ public class KioskView extends VerticalLayout {
     List<Donut>         donuts        = List.of();
     List<Roll>          rolls         = List.of();
     List<PricingSheet>  pricingSheets = List.of();
+    List<Merchandise>   merchandise   = List.of();
 
     var donutTypes = new ItemType[]{ItemType.CAKE_DONUT, ItemType.GLAZED_DONUT, ItemType.RAISED_DONUT, ItemType.BIG_DONUT, ItemType.MIX};
     var rollTypes = new ItemType[] {ItemType.ROLL, ItemType.MIX};
@@ -158,6 +163,7 @@ public class KioskView extends VerticalLayout {
     try { donuts        = donutsClient.findByItemTypes(donutTypes);        } catch (Exception e) { log.warn("Could not load donuts: {}",          e.getMessage()); }
     try { rolls         = rollClient.findByItemTypes(rollTypes);           } catch (Exception e) { log.warn("Could not load rolls: {}",           e.getMessage()); }
     try { pricingSheets = pricingSheetClient.findAll();   } catch (Exception e) { log.warn("Could not load pricing sheets: {}",  e.getMessage()); }
+    try { merchandise   = merchandiseClient.findAll();    } catch (Exception e) { log.warn("Could not load merchandise: {}",      e.getMessage()); }
 
     ZoneId zone = ZoneId.of("America/Chicago");
     headerDate.setText(LocalDate.now(zone).format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy")));
@@ -165,7 +171,8 @@ public class KioskView extends VerticalLayout {
 
     content.removeAll();
 
-    List<Donut> donutHoles = donutsClient.findByItemTypes(donutHoleTypes);
+    List<Donut> donutHoles = List.of();
+    try { donutHoles = donutsClient.findByItemTypes(donutHoleTypes); } catch (Exception e) { log.warn("Could not load donut holes: {}", e.getMessage()); }
 
     if (!donuts.isEmpty()) content.add(createSection("Donuts",      donuts));
     if (!donutHoles.isEmpty())    content.add(createSection("Donut Holes", donutHoles));
@@ -181,47 +188,87 @@ public class KioskView extends VerticalLayout {
     allProducts.addAll(donuts);
     allProducts.addAll(donutHoles);
 
-    buildMerchandiseSidebar(donuts, rolls, donutHoles);
+    buildMerchandiseSidebar(merchandise);
     buildPricesSidebar(pricingSheets, allProducts, rolls);
   }
 
-  private void buildMerchandiseSidebar(List<Donut> donuts, List<Roll> rolls, List<Donut> donutHoles) {
+  private void buildMerchandiseSidebar(List<Merchandise> merchandise) {
     merchandiseSidebar.removeAll();
 
-    Span title = new Span("Items");
+    Span title = new Span("Merchandise");
     title.addClassName("kiosk-merchandise-title");
     merchandiseSidebar.add(title);
 
-    List<Donut> sortedDonuts = donuts.stream()
-        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
-        .toList();
-    List<Roll> sortedRolls = rolls.stream()
-        .sorted(Comparator.comparingInt(r -> r.getOrder() == null ? Integer.MAX_VALUE : r.getOrder()))
-        .toList();
-    List<Donut> sortedHoles = donutHoles.stream()
-        .sorted(Comparator.comparingInt(d -> d.getOrder() == null ? Integer.MAX_VALUE : d.getOrder()))
+    List<Merchandise> sorted = merchandise.stream()
+        .sorted(Comparator.comparingInt(m -> m.getOrder() == null ? Integer.MAX_VALUE : m.getOrder()))
         .toList();
 
-    for (Donut product : sortedDonuts) {
-      addMerchandiseItem(product.getDescription());
-    }
-    for (Roll product : sortedRolls) {
-      addMerchandiseItem(product.getDescription());
-    }
-    for (Donut product : sortedHoles) {
-      addMerchandiseItem(product.getDescription());
+    for (Merchandise item : sorted) {
+      addMerchandiseItem(item);
     }
   }
 
-  private void addMerchandiseItem(String name) {
-    Div item = new Div();
-    item.addClassName("kiosk-merchandise-item");
+  private void addMerchandiseItem(Merchandise merchandise) {
+    Div card = new Div();
+    card.addClassName("kiosk-merchandise-card");
 
-    Span nameSpan = new Span(name != null ? name : "");
-    nameSpan.addClassName("kiosk-merchandise-name");
-    item.add(nameSpan);
+    Div mediaRow = new Div();
+    mediaRow.addClassName("kiosk-merchandise-card-media");
 
-    merchandiseSidebar.add(item);
+    String imgUrl = bestImageUrl(merchandise);
+    if (imgUrl != null) {
+      Image img = new Image(imgUrl, merchandise.getDescription() != null ? merchandise.getDescription() : "");
+      img.addClassName("kiosk-merchandise-card-img");
+      mediaRow.add(img);
+    } else {
+      Div placeholder = new Div();
+      placeholder.addClassName("kiosk-merchandise-card-img-placeholder");
+      mediaRow.add(placeholder);
+    }
+
+    card.add(mediaRow);
+
+    if (notBlank(merchandise.getDescription())) {
+      Span name = new Span(merchandise.getDescription());
+      name.addClassName("kiosk-merchandise-card-name");
+      card.add(name);
+    }
+
+    if (merchandise.getPrice() != null) {
+      Span price = new Span(String.format("$%.2f", merchandise.getPrice()));
+      price.addClassName("kiosk-merchandise-card-price");
+      card.add(price);
+    }
+
+    Div properties = new Div();
+    properties.addClassName("kiosk-merchandise-card-properties");
+
+    if (notBlank(merchandise.getSize())) {
+      Span prop = new Span("Size: " + merchandise.getSize());
+      prop.addClassName("kiosk-merchandise-card-property");
+      properties.add(prop);
+    }
+    if (notBlank(merchandise.getColor())) {
+      Span prop = new Span("Color: " + merchandise.getColor());
+      prop.addClassName("kiosk-merchandise-card-property");
+      properties.add(prop);
+    }
+    if (notBlank(merchandise.getMaterial())) {
+      Span prop = new Span("Material: " + merchandise.getMaterial());
+      prop.addClassName("kiosk-merchandise-card-property");
+      properties.add(prop);
+    }
+    if (notBlank(merchandise.getBrand())) {
+      Span prop = new Span("Brand: " + merchandise.getBrand());
+      prop.addClassName("kiosk-merchandise-card-property");
+      properties.add(prop);
+    }
+
+    if (properties.getChildren().count() > 0) {
+      card.add(properties);
+    }
+
+    merchandiseSidebar.add(card);
   }
 
   private void buildPricesSidebar(List<PricingSheet> sheets, List<Donut> allProducts, List<Roll> rolls) {
@@ -353,7 +400,7 @@ public class KioskView extends VerticalLayout {
     return section;
   }
 
-  private static final int PAGE_SIZE = 12;
+  private static final int PAGE_SIZE = 18;
 
   private Div createScrollingRow(List<?> items) {
     Div viewport = new Div();
@@ -377,6 +424,8 @@ public class KioskView extends VerticalLayout {
         Object item = sorted.get(i);
         if (item instanceof Donut) {
           page.add(createCard((Donut) item));
+        } else if (item instanceof Roll) {
+          page.add(createCard((Roll) item));
         }
       }
       track.add(page);
@@ -452,7 +501,53 @@ public class KioskView extends VerticalLayout {
     return card;
   }
 
+  private Div createCard(Roll item) {
+    Div card = new Div();
+    card.addClassName("kiosk-card");
+
+    Div mediaRow = new Div();
+    mediaRow.addClassName("kiosk-card-media");
+
+    Div left = new Div();
+    left.addClassName("kiosk-card-left");
+
+    if (item.getAvailableDays() != null && !item.getAvailableDays().isBlank()) {
+      Span days = new Span(item.getAvailableDays().replace(",", " · "));
+      days.addClassName("kiosk-card-days");
+      left.add(days);
+    }
+
+    mediaRow.add(left);
+
+    String imgUrl = bestImageUrl(item);
+    if (imgUrl != null) {
+      Image img = new Image(imgUrl, item.getDescription());
+      img.addClassName("kiosk-card-img");
+      mediaRow.add(img);
+    } else {
+      Div placeholder = new Div();
+      placeholder.addClassName("kiosk-card-img-placeholder");
+      mediaRow.add(placeholder);
+    }
+
+    card.add(mediaRow);
+
+    Span name = new Span(item.getDescription());
+    name.addClassName("kiosk-card-name");
+    card.add(name);
+
+    return card;
+  }
+
   private String bestImageUrl(Donut item) {
+    return KioskLogic.bestImageUrl(item);
+  }
+
+  private String bestImageUrl(Roll item) {
+    return KioskLogic.bestImageUrl(item);
+  }
+
+  private String bestImageUrl(Merchandise item) {
     return KioskLogic.bestImageUrl(item);
   }
 
